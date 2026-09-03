@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   const body = await request.json() as Record<string, unknown>;
   const week = Number(body.week);
   const day = String(body.day ?? "");
-  if (!Number.isInteger(week) || week < 1 || week > 8 || !["Monday", "Tuesday", "Wednesday", "Friday", "Saturday"].includes(day)) {
+  if (!Number.isInteger(week) || week < 1 || week > 8 || !["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].includes(day)) {
     return Response.json({ error: "Invalid week or workout day." }, { status: 400 });
   }
   const now = new Date().toISOString();

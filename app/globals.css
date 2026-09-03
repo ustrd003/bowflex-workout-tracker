@@ -1,3 +1,4 @@
+.history-row { min-width: 740px; display: grid; grid-template-columns: 70px repeat(6, 1fr) 100px; align-items: center; min-height: 54px; border-top: 1px solid #e7eee9; text-align: center; }
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
@@ -89,8 +90,13 @@ h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.05rem); letter-spacing: -.
 .cardio-fields label { display: grid; gap: 5px; color: #cadccf; font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
 .cardio-fields input { width: 90px; height: 43px; background: #fff; color: #14231c; }
 .cardio-fields button { height: 43px; background: #f4b34c; color: #183c2c; }
+.finish-toggle { align-self: center; display: flex !important; flex-direction: row; align-items: center; gap: 7px; white-space: nowrap; }
+.finish-toggle input { width: 16px; height: 16px; }
 .toast { position: fixed; right: 25px; bottom: 25px; z-index: 10; padding: 12px 17px; border-radius: 11px; background: #122f23; color: #fff; box-shadow: 0 10px 35px #0003; font-weight: 700; }
 .progress-layout { margin-top: 18px; display: grid; gap: 18px; }
+.rest-card { margin-top: 18px; padding: 42px; background: #fff; border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 15px 40px #2447330b; }
+.rest-card h2 { margin-bottom: 8px; }
+.rest-card p:last-child { max-width: 620px; margin: 0; color: #5f7066; line-height: 1.6; }
 .weight-card, .history-card, .plan-card { background: #fff; border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 15px 40px #2447330b; }
 .weight-card { padding: 25px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; }
 .weight-card h2 { font-size: 1.45rem; }
@@ -102,7 +108,7 @@ h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.05rem); letter-spacing: -.
 .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .section-heading strong { font-size: 2.4rem; color: #176b45; }
 .history-table { overflow-x: auto; }
-.history-row { min-width: 670px; display: grid; grid-template-columns: 70px repeat(5, 1fr) 100px; align-items: center; min-height: 54px; border-top: 1px solid #e7eee9; text-align: center; }
+.history-row { min-width: 740px; display: grid; grid-template-columns: 70px repeat(6, 1fr) 100px; align-items: center; min-height: 54px; border-top: 1px solid #e7eee9; text-align: center; }
 .history-head { border: 0; color: #6d7e73; font-size: .76rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .complete-dot { margin: auto; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #dff1e6; color: #1a7148; }
 .complete-dot svg { width: 15px; }
@@ -144,6 +150,7 @@ h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.05rem); letter-spacing: -.
   .exercise-image { min-height: 300px; padding: 16px; }
   .exercise-image img { max-height: 275px; }
   .exercise-content { padding: 22px 17px; }
+  .rest-card { padding: 28px 20px; }
   .setup-details { grid-template-columns: 1fr; }
   .manual-badge { font-size: .7rem; }
   .set-header, .set-row { grid-template-columns: 42px 1fr 74px; }
