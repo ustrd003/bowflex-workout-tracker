@@ -10,19 +10,65 @@ export type Exercise = {
   targetReps?: string;
   equipment?: string;
   instructions?: string;
+  movement?: string;
+  formTips?: string[];
   category?: "Bowflex" | "Accessory";
   setup: string;
 };
 
-export const exercises: Exercise[] = [
-  { id: "bench-press", name: "Bench Press", image: "/exercises/bench_press.png", manualPage: 20, pulley: "Center Cross Bar — wide position", attachment: "Hand grips", startResistance: 20, setup: "Sit facing away from the rods. Keep your shoulder blades down and elbows slightly below shoulder height." },
-  { id: "seated-lat-row", name: "Seated Lat Rows", image: "/exercises/seated_lat_rows.png", manualPage: 33, pulley: "Squat Pulley Frame", attachment: "Hand grips", startResistance: 20, setup: "Sit facing the rods with knees bent. Keep your chest lifted and pull the grips toward your torso." },
-  { id: "leg-extension", name: "Leg Extension", image: "/exercises/leg_extension.png", manualPage: 48, pulley: "Squat Pulley Frame", attachment: "Leg Extension", startResistance: 20, setup: "Sit with knees aligned with the leg-extension pivot. Place the roller pads across the front of your lower legs." },
-  { id: "shoulder-press", name: "Seated Shoulder Press", image: "/exercises/shoulder_press.png", manualPage: 25, pulley: "Center Cross Bar — wide position", attachment: "Hand grips", startResistance: 10, setup: "Sit facing away from the rods. Start with elbows bent and grips just above shoulder level." },
-  { id: "biceps-curl", name: "Biceps Curl", image: "/exercises/biceps_curl.png", manualPage: 41, pulley: "Squat Pulley Frame", attachment: "Hand grips", startResistance: 10, setup: "Stand facing the rods with arms at your sides. Keep your elbows close to your body as you curl." },
-  { id: "triceps-pushdown", name: "Triceps Pushdown", image: "/exercises/triceps_pushdown.png", manualPage: 37, pulley: "Lat Tower", attachment: "Hand grips", startResistance: 10, setup: "Stand facing the machine with elbows tucked at your sides. Press down without moving your upper arms." },
-  { id: "abdominal-crunch", name: "Seated Abdominal Crunch", image: "/exercises/abdominal_crunch.png", manualPage: 47, pulley: "Abdominal bar", attachment: "Shoulder harness", startResistance: 20, setup: "Sit facing away from the rods with the harness over your shoulders. Curl your rib cage toward your hips." },
+const baseExercises: Exercise[] = [
+  { id: "bench-press", name: "Bench Press", image: "/exercises/bench-press.png", manualPage: 20, pulley: "Center Cross Bar — wide position", attachment: "Hand grips", startResistance: 20, setup: "Sit facing away from the rods. Keep your shoulder blades down and elbows slightly below shoulder height." },
+  { id: "seated-lat-row", name: "Seated Lat Rows", image: "/exercises/seated-lat-row.png", manualPage: 33, pulley: "Squat Pulley Frame", attachment: "Hand grips", startResistance: 20, setup: "Sit facing the rods with knees bent. Keep your chest lifted and pull the grips toward your torso." },
+  { id: "leg-extension", name: "Leg Extension", image: "/exercises/leg-extension.png", manualPage: 48, pulley: "Squat Pulley Frame", attachment: "Leg Extension", startResistance: 20, setup: "Sit with knees aligned with the leg-extension pivot. Place the roller pads across the front of your lower legs." },
+  { id: "shoulder-press", name: "Seated Shoulder Press", image: "/exercises/shoulder-press.png", manualPage: 25, pulley: "Center Cross Bar — wide position", attachment: "Hand grips", startResistance: 10, setup: "Sit facing away from the rods. Start with elbows bent and grips just above shoulder level." },
+  { id: "biceps-curl", name: "Biceps Curl", image: "/exercises/biceps-curl.png", manualPage: 41, pulley: "Squat Pulley Frame", attachment: "Hand grips", startResistance: 10, setup: "Stand facing the rods with arms at your sides. Keep your elbows close to your body as you curl." },
+  { id: "triceps-pushdown", name: "Triceps Pushdown", image: "/exercises/triceps-pushdown.png", manualPage: 37, pulley: "Lat Tower", attachment: "Hand grips", startResistance: 10, setup: "Stand facing the machine with elbows tucked at your sides. Press down without moving your upper arms." },
+  { id: "abdominal-crunch", name: "Seated Abdominal Crunch", image: "/exercises/abdominal-crunch.png", manualPage: 47, pulley: "Abdominal bar", attachment: "Shoulder harness", startResistance: 20, setup: "Sit facing away from the rods with the harness over your shoulders. Curl your rib cage toward your hips." },
 ];
+
+const bowflexInstructions: Record<string, Pick<Exercise, "setup" | "movement" | "formTips">> = {
+  "bench-press": {
+    setup: "Remove the Leg Extension attachment and adjust the seat height. Sit facing away from the Power Rods. Hold the hand grips with your arms extended in front of you. Keep your arms aligned with the cables, palms facing down and wrists straight. Lift your chest and gently draw your shoulder blades together.",
+    movement: "Slowly move your elbows outward while bending your arms. Keep your forearms aligned with the cables. Stop when your upper arms are level with your shoulders, then press forward smoothly until your arms return to the starting position.",
+    formTips: ["Keep approximately a 90-degree angle between your upper arms and torso.", "Do not allow your elbows to travel behind your shoulders.", "Keep your shoulder blades gently drawn together.", "Do not lock your elbows.", "Use slow, controlled movement."],
+  },
+  "seated-lat-row": {
+    setup: "Remove the Leg Extension attachment and seat. Sit facing the machine with your heels against the end of the platform and your knees comfortably bent. Hold the hand grips with your palms facing one another. Sit upright with your chest lifted and spine in a neutral position.",
+    movement: "Pull your upper arms down and backward, keeping them close to the sides of your body. Keep your forearms pointing in the direction of the cables. Gently squeeze your shoulder blades together, then return slowly to the starting position.",
+    formTips: ["Do not bend your torso forward.", "Keep your chest lifted and spine aligned.", "Avoid shrugging your shoulders.", "Allow the shoulder blades to release at the end of each repetition before beginning the next pull.", "Do not jerk the cables."],
+  },
+  "leg-extension": {
+    setup: "Adjust the seat height. Sit facing away from the machine with your knees close to the Leg Extension pivot point and the lower roller pads resting across your shins. Keep your thighs approximately hip-width apart with your kneecaps pointing forward. Hold the sides of the seat and sit upright with your chest lifted and abdomen braced.",
+    movement: "Tighten your quadriceps and straighten your legs forward and upward. Stop just before locking your knees. Pause briefly, then return slowly while maintaining tension in the front of your thighs.",
+    formTips: ["Do not kick into the movement.", "Do not lock your knees.", "Keep your kneecaps pointing forward.", "Do not allow your knees to rotate outward.", "Keep your back supported and your abdomen braced."],
+  },
+  "shoulder-press": {
+    setup: "Remove the Leg Extension attachment and adjust the seat height. Sit facing away from the Power Rods with your knees bent and feet flat. Hold the grips just above shoulder level with your palms facing forward. Keep your chest lifted, abdomen braced and lower back in a comfortable neutral position.",
+    movement: "Press the grips upward by straightening your arms. Keep your elbows moving upward and slightly inward. Stop just before locking your elbows, then return slowly to the starting position.",
+    formTips: ["Keep your abdomen braced throughout the movement.", "Do not exaggerate the arch in your lower back.", "Keep your wrists straight.", "Avoid shrugging your shoulders.", "Do not lock your elbows."],
+  },
+  "biceps-curl": {
+    setup: "Remove the seat and Leg Extension attachment. Stand on the platform facing the machine. Hold the grips with your palms facing forward. Stand upright with your upper arms close to your sides, chest lifted and abdomen braced.",
+    movement: "Keep your upper arms still as you curl the grips forward, upward and toward your shoulders. Pause briefly at the top, then lower the grips slowly along the same path.",
+    formTips: ["Keep your elbows close to your sides.", "Do not swing your torso.", "Keep your wrists straight.", "Maintain a neutral spine.", "Do not allow the resistance to pull your arms down quickly."],
+  },
+  "triceps-pushdown": {
+    setup: "Remove the seat and Leg Extension attachment. Stand on the platform facing the machine. Hold the grips approximately shoulder-width apart with your palms facing down. Keep your elbows close to your sides. Hinge forward slightly from the hips while keeping your chest lifted and spine neutral.",
+    movement: "Keep your upper arms stationary. Allow your elbows to bend until they reach approximately 90 degrees, then press the grips downward by straightening your arms. Stop before forcefully locking your elbows and return slowly.",
+    formTips: ["Keep your upper arms still and your elbows beside your torso.", "Keep your wrists straight.", "Maintain a neutral spine.", "Keep your abdomen braced.", "Do not use body momentum to push the grips downward."],
+  },
+  "abdominal-crunch": {
+    setup: "Remove the Leg Extension attachment. Connect the shoulder harness to the D-rings and place it over your shoulders with the handles hanging over your chest or thighs. Hold both handles. Sit with your feet flat, knees bent and lower back in a comfortable neutral position.",
+    movement: "Tighten your abdominal muscles and curl your torso forward by bringing your ribs toward your hips. Move only as far as possible without moving your hips or pulling with your neck. Return slowly without completely relaxing your abdominal muscles.",
+    formTips: ["Exhale while curling forward and inhale while returning.", "Do not pull your head or chin forward.", "Keep your neck aligned with your spine.", "Keep your abdominal muscles engaged throughout the set.", "Do not use momentum.", "Maintain contact between your lower back and the bench at the fully contracted position."],
+  },
+};
+
+export const exercises: Exercise[] = baseExercises.map((exercise) => ({
+  ...exercise,
+  image: `/exercises/${exercise.id === "seated-lat-row" ? "seated-lat-row" : exercise.id.replace(/_/g, "-")}.png`,
+  ...bowflexInstructions[exercise.id],
+}));
 
 const accessoryExercise = (exercise: Omit<Exercise, "category">): Exercise => ({ ...exercise, category: "Accessory" });
 
