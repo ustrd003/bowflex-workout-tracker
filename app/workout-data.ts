@@ -113,19 +113,36 @@ export const weeks = [
   { week: 8, sets: 2, reps: "12–15", strengthE95: "15 min · level 4", cardio: "35 min · level 4; 4 × 1 min at 5" },
 ];
 
-export const programStartDate = "2026-09-03";
-export const programDays = ["Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday"];
 export const workoutDays = scheduledWorkoutDays;
 export const scheduleDays = scheduledDays;
 export const strengthDays = new Set(Object.keys(strengthExercisesByDay));
 
-export function getInitialProgramSelection(today = new Date()) {
-  const start = new Date(`${programStartDate}T00:00:00`);
+const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+export function toLocalDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dateFromKey(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+export function getInitialProgramSelection(startDate?: string | null, today = new Date()) {
   const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (!startDate) {
+    return { week: 1, day: weekdayNames[current.getDay()] };
+  }
+  const start = dateFromKey(startDate);
   const elapsedDays = Math.floor((current.getTime() - start.getTime()) / 86400000);
   const dayIndex = Math.max(0, Math.min(elapsedDays, weeks.length * 7 - 1));
+  const selectedDate = new Date(start);
+  selectedDate.setDate(start.getDate() + dayIndex);
   return {
     week: Math.floor(dayIndex / 7) + 1,
-    day: programDays[dayIndex % programDays.length],
+    day: weekdayNames[selectedDate.getDay()],
   };
 }

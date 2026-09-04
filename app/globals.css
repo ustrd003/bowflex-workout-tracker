@@ -35,7 +35,10 @@ button, input { font: inherit; }
 .week-strip > label { display: grid; gap: 6px; color: #66786d; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .week-strip [data-slot="select-trigger"] { width: 140px; height: 44px; font-size: 1rem; text-transform: none; letter-spacing: 0; }
 .week-strip > label:first-child { min-width: 140px; }
-.plan-pill { margin-left: auto; min-height: 52px; padding: 10px 16px; display: flex; align-items: center; gap: 11px; border-radius: 13px; background: #fff4df; color: #6f4b13; }
+.week-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.start-plan-button { height: 46px; padding-inline: 18px; background: #176b45 !important; color: #fff !important; box-shadow: 0 8px 18px #176b4520; }
+.start-plan-button:hover { background: #125638 !important; }
+.plan-pill { min-height: 52px; padding: 10px 16px; display: flex; align-items: center; gap: 11px; border-radius: 13px; background: #fff4df; color: #6f4b13; }
 .plan-pill svg { color: #dd8c17; }
 .plan-pill span { display: grid; gap: 2px; font-size: .83rem; }
 .plan-pill strong { color: #3c2a0d; font-size: .95rem; }
@@ -57,7 +60,6 @@ button, input { font: inherit; }
 .exercise-image { position: static; align-self: start; width: 100%; min-height: 0; height: auto; padding: 20px; display: grid; place-items: start center; border: 0; color: inherit; cursor: zoom-in; background: linear-gradient(145deg, #f0f5f1, #e1ece5); }
 .exercise-image img { display: block; width: 100%; max-width: none; height: auto; max-height: none; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.04); }
 .exercise-image:focus-visible { outline: 3px solid var(--ring); outline-offset: -3px; }
-.image-hint { position: absolute; right: 14px; bottom: 14px; padding: 5px 8px; border-radius: 7px; background: #14231cd9; color: #fff; font-size: .7rem; font-weight: 700; }
 .accessory-visual { color: #176b45; }
 .accessory-visual svg { width: 94px; height: 94px; padding: 24px; border-radius: 50%; background: #fff; box-shadow: 0 12px 28px #24473316; }
 .accessory-visual span { color: #5f7066; font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
@@ -148,7 +150,9 @@ h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.05rem); letter-spacing: -.
   .week-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .week-strip [data-slot="select-trigger"] { width: 100%; }
   .week-strip > label:first-child { grid-column: 1 / -1; }
-  .plan-pill { grid-column: 1 / -1; margin: 0; }
+  .week-actions { grid-column: 1 / -1; margin: 0; display: grid; grid-template-columns: 1fr; }
+  .start-plan-button { width: 100%; }
+  .plan-pill { margin: 0; }
   .tab-list button { font-size: .78rem; padding-inline: 6px; }
   .exercise-list { margin: 0 -10px; border-radius: 0; padding-inline: 10px; }
   .exercise-list button { min-width: 165px; }

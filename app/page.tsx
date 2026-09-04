@@ -8,11 +8,33 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { cardioDays, getInitialProgramSelection, recoveryDays, scheduleDays, scheduledWorkoutDays, strengthDays, strengthExercisesByDay, weeks, workoutDays, weeklyScheduledWorkoutCount } from "./workout-data";
+import { cardioDays, getInitialProgramSelection, recoveryDays, scheduleDays, scheduledWorkoutDays, strengthDays, strengthExercisesByDay, toLocalDateKey, weeks, workoutDays, weeklyScheduledWorkoutCount } from "./workout-data";
 
 type SetLog = { resistance: string; reps: string };
-type ProgressData = { workouts: Array<{ week: number; day: string; exerciseId: string; setNumber: number; resistance: number; reps: number; completedAt: string }>; cardio: Array<{ week: number; day: string; minutes: number; resistance: number; completedAt: string }>; weights: Array<{ week: number; weight: number; recordedAt: string }> };
-const emptyProgress: ProgressData = { workouts: [], cardio: [], weights: [] };
+type ProgressData = { planStartDate: string | null; workouts: Array<{ week: number; day: string; exerciseId: string; setNumber: number; resistance: number; reps: number; completedAt: string }>; cardio: Array<{ week: number; day: string; minutes: number; resistance: number; completedAt: string }>; weights: Array<{ week: number; weight: number; recordedAt: string }> };
+const emptyProgress: ProgressData = { planStartDate: null, workouts: [], cardio: [], weights: [] };
+
+function buildLogs(week: number, day: string, workouts: ProgressData["workouts"]) {
+  const plan = weeks[week - 1];
+  const dayExercises = strengthExercisesByDay[day] ?? [];
+  const next: Record<string, SetLog[]> = {};
+  dayExercises.forEach((exercise) => {
+    next[exercise.id] = Array.from({ length: plan.sets }, (_, setIndex) => {
+      const previous = workouts.find((entry) => entry.week === week && entry.day === day && entry.exerciseId === exercise.id && entry.setNumber === setIndex + 1);
+      return { resistance: String(previous?.resistance ?? exercise.startResistance), reps: exercise.targetReps ?? (plan.reps.includes("–") ? plan.reps.split("–")[0] : plan.reps) };
+    });
+  });
+  return next;
+}
+
+function cardioDefaults(week: number, day: string) {
+  const plan = weeks[week - 1];
+  const target = cardioDays.has(day) ? plan.cardio : plan.strengthE95;
+  return {
+    minutes: target.match(/\d+/)?.[0] ?? "20",
+    resistance: target.match(/level (\d+)/)?.[1] ?? "2",
+  };
+}
 
 export default function Home() {
   const initialSelection = getInitialProgramSelection();
@@ -34,15 +56,30 @@ export default function Home() {
   const dayExercises = strengthExercisesByDay[day] ?? [];
 
   const progressRequest = (init?: RequestInit) => fetch("/api/progress", { ...init, headers: { "x-workout-user": selectedUser, ...(init?.headers ?? {}) } });
-  useEffect(() => { setProgress(emptyProgress); progressRequest().then((r) => r.json()).then(setProgress).catch(() => setStatus("Progress could not be loaded.")); }, [selectedUser]);
   useEffect(() => {
-    const next: Record<string, SetLog[]> = {};
-    dayExercises.forEach((exercise) => { next[exercise.id] = Array.from({ length: plan.sets }, (_, setIndex) => { const previous = progress.workouts.find((entry) => entry.exerciseId === exercise.id && entry.setNumber === setIndex + 1); return { resistance: String(previous?.resistance ?? exercise.startResistance), reps: exercise.targetReps ?? (plan.reps.includes("–") ? plan.reps.split("–")[0] : plan.reps) }; }); });
-    setLogs(next);
-  }, [week, day, progress.workouts, plan.reps, plan.sets]);
-  useEffect(() => { const target = cardioDays.has(day) ? plan.cardio : plan.strengthE95; setCardioMinutes(target.match(/\d+/)?.[0] ?? "20"); setCardioResistance(target.match(/level (\d+)/)?.[1] ?? "2"); }, [week, day, plan.cardio, plan.strengthE95]);
+    fetch("/api/progress", { headers: { "x-workout-user": selectedUser } }).then((r) => r.json()).then((nextProgress: ProgressData) => {
+      const selection = getInitialProgramSelection(nextProgress.planStartDate);
+      const defaults = cardioDefaults(selection.week, selection.day);
+      setProgress(nextProgress);
+      setWeek(selection.week);
+      setDay(selection.day);
+      setActiveExercise(0);
+      setLogs(buildLogs(selection.week, selection.day, nextProgress.workouts));
+      setCardioMinutes(defaults.minutes);
+      setCardioResistance(defaults.resistance);
+    }).catch(() => setStatus("Progress could not be loaded."));
+  }, [selectedUser]);
 
-  const refresh = async () => { const response = await progressRequest(); if (response.ok) setProgress(await response.json()); };
+  const selectWorkout = (nextWeek: number, nextDay: string) => {
+    const defaults = cardioDefaults(nextWeek, nextDay);
+    setWeek(nextWeek);
+    setDay(nextDay);
+    setActiveExercise(0);
+    setLogs(buildLogs(nextWeek, nextDay, progress.workouts));
+    setCardioMinutes(defaults.minutes);
+    setCardioResistance(defaults.resistance);
+  };
+  const refresh = async (nextWeek = week, nextDay = day) => { const response = await progressRequest(); if (response.ok) { const nextProgress = await response.json() as ProgressData; setProgress(nextProgress); setLogs(buildLogs(nextWeek, nextDay, nextProgress.workouts)); } };
   const updateSet = (exerciseId: string, index: number, field: keyof SetLog, value: string) => setLogs((current) => ({ ...current, [exerciseId]: current[exerciseId].map((set, i) => i === index ? { ...set, [field]: value } : set) }));
   const addSet = () => setLogs((current) => ({ ...current, [exercise.id]: [...(current[exercise.id] ?? []), { resistance: String(exercise.startResistance), reps: plan.reps.includes("–") ? plan.reps.split("–")[0] : plan.reps }] }));
   const saveCardio = async (showMessage = true) => { if (showMessage) setStatus("Saving…"); const response = await progressRequest({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "cardio", week, day, minutes: Number(cardioMinutes), resistance: Number(cardioResistance) }) }); if (showMessage) setStatus(response.ok ? "Cardio saved" : "Please check the time and resistance."); if (response.ok) await refresh(); };
@@ -53,6 +90,17 @@ export default function Home() {
     if (includeE95) await saveCardio(false); setStatus("Workout saved"); await refresh();
   };
   const saveWeight = async () => { setStatus("Saving…"); const response = await progressRequest({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "weight", week, day: workoutDays[0], weight: Number(weight) }) }); setStatus(response.ok ? "Weight saved" : "Please enter a valid weight."); if (response.ok) { setWeight(""); await refresh(); } };
+  const startPlan = async () => {
+    setStatus("Saving…");
+    const startDate = toLocalDateKey();
+    const response = await progressRequest({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "startPlan", startDate }) });
+    setStatus(response.ok ? "Plan started" : "Plan could not be started.");
+    if (response.ok) {
+      const selection = getInitialProgramSelection(startDate);
+      selectWorkout(selection.week, selection.day);
+      await refresh(selection.week, selection.day);
+    }
+  };
 
   const completedDays = useMemo(() => {
     const completed = new Set(progress.cardio.map((entry) => `${entry.week}-${entry.day}`));
@@ -72,16 +120,16 @@ export default function Home() {
     <div className="app-shell">
       <section className="week-strip" aria-label="Choose workout">
         <label>Person<Select value={selectedUser} onValueChange={setSelectedUser}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="bill">Bill</SelectItem><SelectItem value="paulette">Paulette</SelectItem></SelectContent></Select></label>
-        <label>Week<Select value={String(week)} onValueChange={(value) => { setWeek(Number(value)); setActiveExercise(0); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{weeks.map((item) => <SelectItem key={item.week} value={String(item.week)}>Week {item.week}</SelectItem>)}</SelectContent></Select></label>
-        <label>Workout<Select value={day} onValueChange={(value) => { setDay(value); setActiveExercise(0); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{scheduleDays.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></label>
-        <div className="plan-pill"><Flame /><span><strong>{isRestDay ? "Recovery day" : isStrength ? `${plan.sets} set${plan.sets > 1 ? "s" : ""} · ${plan.reps} reps` : "Cardio day"}</strong>{isRestDay ? "Rest or take an easy walk" : isStrength ? `E95 finish: ${plan.strengthE95}` : plan.cardio}</span></div>
+        <label>Week<Select value={String(week)} onValueChange={(value) => selectWorkout(Number(value), day)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{weeks.map((item) => <SelectItem key={item.week} value={String(item.week)}>Week {item.week}</SelectItem>)}</SelectContent></Select></label>
+        <label>Workout<Select value={day} onValueChange={(value) => selectWorkout(week, value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{scheduleDays.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></label>
+        <div className="week-actions">{!progress.planStartDate && <Button className="start-plan-button" onClick={startPlan}><Check />Start Plan</Button>}<div className="plan-pill"><Flame /><span><strong>{isRestDay ? "Recovery day" : isStrength ? `${plan.sets} set${plan.sets > 1 ? "s" : ""} · ${plan.reps} reps` : "Cardio day"}</strong>{isRestDay ? "Rest or take an easy walk" : isStrength ? `E95 finish: ${plan.strengthE95}` : plan.cardio}</span></div></div>
       </section>
       <Tabs defaultValue="workout" className="main-tabs">
         <TabsList className="tab-list"><TabsTrigger value="workout"><Activity />Workout</TabsTrigger><TabsTrigger value="progress"><Scale />Progress</TabsTrigger><TabsTrigger value="guide"><BookOpen />8-week plan</TabsTrigger></TabsList>
         <TabsContent value="workout">
           {isRestDay ? <section className="rest-card"><p className="eyebrow">Recovery day</p><h2>Take it easy</h2><p>Sunday is a recovery day. An easy 10–20 minute walk is welcome, but there is no scheduled workout to log.</p></section> : isStrength ? <div className="workout-grid">
             <aside className="exercise-list" aria-label="Exercises">{dayExercises.map((item, index) => { const filled = (logs[item.id] ?? []).every((set) => set.resistance !== "" && set.reps !== ""); return <button key={item.id} className={index === activeExercise ? "active" : ""} onClick={() => setActiveExercise(index)}><span>{index + 1}</span><div><strong>{item.name}</strong><small>{item.category === "Accessory" ? "Accessory" : `${item.startResistance} lb starting total`}</small></div>{filled && <Check className="done-icon" />}</button>; })}</aside>
-            <article className="exercise-card">{exercise.image ? <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}><DialogTrigger asChild><button type="button" className="exercise-image" aria-label={`View ${exercise.name} image fullscreen`}><img src={exercise.image} alt={`${exercise.category === "Accessory" ? "Accessory movement" : "Bowflex Xceed start and finish positions"} for ${exercise.name}`} /><span className="image-hint" aria-hidden="true">Click to enlarge</span></button></DialogTrigger><DialogContent className="lightbox-content"><DialogTitle className="sr-only">{exercise.name}</DialogTitle><img className="lightbox-image" src={exercise.image} alt={`${exercise.category === "Accessory" ? "Accessory movement" : "Bowflex Xceed start and finish positions"} for ${exercise.name}`} /></DialogContent></Dialog> : <div className="exercise-image accessory-visual"><Dumbbell /><span>Accessory movement</span></div>}<div className="exercise-content">
+            <article className="exercise-card">{exercise.image ? <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}><DialogTrigger asChild><button type="button" className="exercise-image" aria-label={`View ${exercise.name} image fullscreen`}><img src={exercise.image} alt={`${exercise.category === "Accessory" ? "Accessory movement" : "Bowflex Xceed start and finish positions"} for ${exercise.name}`} /></button></DialogTrigger><DialogContent className="lightbox-content"><DialogTitle className="sr-only">{exercise.name}</DialogTitle><img className="lightbox-image" src={exercise.image} alt={`${exercise.category === "Accessory" ? "Accessory movement" : "Bowflex Xceed start and finish positions"} for ${exercise.name}`} /></DialogContent></Dialog> : <div className="exercise-image accessory-visual"><Dumbbell /><span>Accessory movement</span></div>}<div className="exercise-content">
               <div className="exercise-heading"><div><p className="eyebrow">{exercise.category === "Accessory" ? "Accessory" : `Exercise ${activeExercise + 1} of ${dayExercises.length}`}</p><h2>{exercise.name}</h2></div><span className="manual-badge">{exercise.category === "Accessory" ? "Accessory" : `Manual p. ${exercise.manualPage}`}</span></div>
               <dl className="setup-details"><div><dt>Equipment</dt><dd>{exercise.equipment ?? "Bowflex Xceed"}</dd></div><div><dt>Pulley</dt><dd>{exercise.pulley}</dd></div><div><dt>Attachment</dt><dd>{exercise.attachment}</dd></div><div><dt>Starting load</dt><dd>{exercise.startResistance === 0 ? "Bodyweight · 0 lb" : `${exercise.startResistance} lb`}</dd></div>{exercise.targetReps && <div><dt>Target</dt><dd>{exercise.targetReps}</dd></div>}</dl><section className="exercise-instructions" aria-label="Exercise instructions"><div><h3>Setup</h3><p>{exercise.setup}</p></div>{exercise.movement && <div><h3>Movement</h3><p>{exercise.movement}</p></div>}{exercise.formTips && <div><h3>Form and safety</h3><ul>{exercise.formTips.map((tip) => <li key={tip}>{tip}</li>)}</ul></div>}</section>
               <div className="set-header"><span>Set</span><span>{exercise.weightMeaning ?? "Total resistance (lb)"}</span><span>Reps</span></div>{(logs[exercise.id] ?? []).map((set, index) => <div className="set-row" key={index}><strong>{index + 1}</strong><Input type="number" min="0" step="1" aria-label={`${exercise.name} set ${index + 1} weight`} value={set.resistance} onChange={(e) => updateSet(exercise.id, index, "resistance", e.target.value)} /><Input type="number" min="1" max="50" aria-label={`${exercise.name} set ${index + 1} repetitions`} value={set.reps} onChange={(e) => updateSet(exercise.id, index, "reps", e.target.value)} /></div>)}

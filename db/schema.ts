@@ -1,5 +1,11 @@
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
+export const planStarts = sqliteTable("w_plan_starts", {
+  userKey: text("user_key").primaryKey(),
+  startDate: text("start_date").notNull(),
+  startedAt: text("started_at").notNull(),
+});
+
 export const workoutEntries = sqliteTable("w_workout_entries", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userKey: text("user_key").notNull(),
