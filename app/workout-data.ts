@@ -117,8 +117,6 @@ export const workoutDays = scheduledWorkoutDays;
 export const scheduleDays = scheduledDays;
 export const strengthDays = new Set(Object.keys(strengthExercisesByDay));
 
-const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
 export function toLocalDateKey(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -134,15 +132,14 @@ function dateFromKey(value: string) {
 export function getInitialProgramSelection(startDate?: string | null, today = new Date()) {
   const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   if (!startDate) {
-    return { week: 1, day: weekdayNames[current.getDay()] };
+    return { week: 1, day: scheduledDays[0] };
   }
   const start = dateFromKey(startDate);
-  const elapsedDays = Math.floor((current.getTime() - start.getTime()) / 86400000);
+  // Compare calendar dates so daylight-saving changes do not shift a workout day.
+  const elapsedDays = Math.floor((Date.UTC(current.getFullYear(), current.getMonth(), current.getDate()) - Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())) / 86400000);
   const dayIndex = Math.max(0, Math.min(elapsedDays, weeks.length * 7 - 1));
-  const selectedDate = new Date(start);
-  selectedDate.setDate(start.getDate() + dayIndex);
   return {
     week: Math.floor(dayIndex / 7) + 1,
-    day: weekdayNames[selectedDate.getDay()],
+    day: scheduledDays[dayIndex % 7],
   };
 }
