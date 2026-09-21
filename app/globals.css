@@ -79,7 +79,7 @@ h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.05rem); letter-spacing: -.
 .setup-details dt { color: #75857b; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .setup-details dd { margin: 3px 0 0; font-size: .9rem; font-weight: 700; }
 .form-note { margin: 18px 0 24px; color: #596c60; line-height: 1.6; }
-.set-header, .set-row { display: grid; grid-template-columns: 48px 1fr 90px; gap: 10px; align-items: center; }
+.set-header, .set-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 74px 94px; gap: 10px; align-items: center; }
 .set-header { padding: 0 4px 7px; color: #728278; font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .set-row { margin-bottom: 9px; }
 .set-row > strong { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #153e2c; color: #fff; }
@@ -163,7 +163,7 @@ h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.05rem); letter-spacing: -.
   .rest-card { padding: 28px 20px; }
   .setup-details { grid-template-columns: 1fr; }
   .manual-badge { font-size: .7rem; }
-  .set-header, .set-row { grid-template-columns: 42px 1fr 74px; }
+  .set-header, .set-row { grid-template-columns: 28px minmax(0, 1fr) 55px 76px; gap: 6px; }
   .exercise-nav button { padding-inline: 12px; }
   .cardio-card, .cardio-card.compact { padding: 24px 18px; grid-template-columns: 1fr; }
   .cardio-orb { width: 58px; height: 58px; }
@@ -176,3 +176,6 @@ h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.05rem); letter-spacing: -.
   .weight-entry input { flex: 1; }
   .history-card, .plan-card { padding: 20px 15px; }
 }
+
+.set-difficulty { display: flex; align-items: center; gap: 6px; font-size: .8rem; cursor: pointer; }
+.set-row .set-difficulty input { width: 18px; height: 18px; flex-shrink: 0; accent-color: #153e2c; }

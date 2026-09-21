@@ -43,6 +43,7 @@ create table if not exists public.w_workout_entries (
   set_number integer not null,
   resistance double precision not null,
   reps integer not null,
+  too_easy boolean not null default false,
   completed_at timestamptz not null
 );
 
@@ -74,3 +75,7 @@ create table if not exists public.w_weekly_weights (
 alter table public.w_workout_entries enable row level security;
 alter table public.w_cardio_entries enable row level security;
 alter table public.w_weekly_weights enable row level security;
+
+-- Upgrade existing installations as well as fresh databases.
+alter table public.w_workout_entries
+  add column if not exists too_easy boolean not null default false;

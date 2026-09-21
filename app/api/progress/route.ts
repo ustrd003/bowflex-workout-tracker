@@ -53,6 +53,7 @@ export async function GET(request: Request) {
       setNumber: row.set_number,
       resistance: row.resistance,
       reps: row.reps,
+      tooEasy: row.too_easy === true,
       completedAt: row.completed_at,
     })),
     cardio: cardio.map((row) => ({
@@ -114,6 +115,7 @@ export async function POST(request: Request) {
           set_number: Number(entry.setNumber),
           resistance: Number(entry.resistance),
           reps: Number(entry.reps),
+          too_easy: entry.tooEasy === true,
           completed_at: now,
         }))),
       });

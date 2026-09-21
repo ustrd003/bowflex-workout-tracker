@@ -104,6 +104,12 @@ curl -H "x-workout-user: bill" http://localhost:3000/api/progress
 curl -H "x-workout-user: paulette" http://localhost:3000/api/progress
 ```
 
+## Database upgrades
+
+Before deploying the workout difficulty checkbox, run
+`supabase/migrations/20260921_add_workout_difficulty.sql` in the Supabase SQL
+Editor. It adds the `too_easy` flag and defaults existing sets to unchecked.
+
 ## Local Commands
 
 - Copy `.env.local.example` to `.env.local` and fill in the Supabase project URL
