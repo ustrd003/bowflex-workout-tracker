@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { cardioDays, getInitialProgramSelection, recoveryDays, scheduleDays, scheduledWorkoutDays, strengthDays, strengthExercisesByDay, toLocalDateKey, weeks, workoutDays, weeklyScheduledWorkoutCount } from "./workout-data";
+import { cardioDays, getCompletedWorkoutDays, getFirstIncompleteWorkout, recoveryDays, scheduleDays, scheduledWorkoutDays, strengthDays, strengthExercisesByDay, toLocalDateKey, weeks, workoutDays, weeklyScheduledWorkoutCount } from "./workout-data";
 
 import { buildLogs, updateFollowingSets, type SetLog } from "./workout-logs";
 
@@ -25,7 +25,7 @@ function cardioDefaults(week: number, day: string) {
 }
 
 export default function Home() {
-  const initialSelection = getInitialProgramSelection();
+  const initialSelection = getFirstIncompleteWorkout(emptyProgress);
   const [week, setWeek] = useState(initialSelection.week);
   const [day, setDay] = useState(initialSelection.day);
   const [selectedUser, setSelectedUser] = useState("bill");
@@ -45,9 +45,15 @@ export default function Home() {
 
   const progressRequest = (init?: RequestInit) => fetch("/api/progress", { ...init, headers: { "x-workout-user": selectedUser, ...(init?.headers ?? {}) } });
   useEffect(() => {
-    fetch("/api/progress", { headers: { "x-workout-user": selectedUser } }).then((r) => r.json()).then((nextProgress: ProgressData) => {
-      const selection = getInitialProgramSelection(nextProgress.planStartDate);
+    let cancelled = false;
+    fetch("/api/progress", { headers: { "x-workout-user": selectedUser } }).then((r) => {
+      if (!r.ok) throw new Error("Progress request failed");
+      return r.json();
+    }).then((nextProgress: ProgressData) => {
+      if (cancelled) return;
+      const selection = getFirstIncompleteWorkout(nextProgress);
       const defaults = cardioDefaults(selection.week, selection.day);
+      setStatus(selection.allComplete ? "All workouts complete!" : "");
       setProgress(nextProgress);
       setWeek(selection.week);
       setDay(selection.day);
@@ -55,7 +61,8 @@ export default function Home() {
       setLogs(buildLogs(selection.week, selection.day, nextProgress.workouts));
       setCardioMinutes(defaults.minutes);
       setCardioResistance(defaults.resistance);
-    }).catch(() => setStatus("Progress could not be loaded."));
+    }).catch(() => { if (!cancelled) setStatus("Progress could not be loaded."); });
+    return () => { cancelled = true; };
   }, [selectedUser]);
 
   const selectWorkout = (nextWeek: number, nextDay: string) => {
@@ -84,22 +91,13 @@ export default function Home() {
     const response = await progressRequest({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "startPlan", startDate }) });
     setStatus(response.ok ? "Plan started" : "Plan could not be started.");
     if (response.ok) {
-      const selection = getInitialProgramSelection(startDate);
+      const selection = getFirstIncompleteWorkout(progress);
       selectWorkout(selection.week, selection.day);
       await refresh(selection.week, selection.day);
     }
   };
 
-  const completedDays = useMemo(() => {
-    const completed = new Set(progress.cardio.map((entry) => `${entry.week}-${entry.day}`));
-    for (const [strengthDay, requiredExercises] of Object.entries(strengthExercisesByDay)) {
-      for (let currentWeek = 1; currentWeek <= weeks.length; currentWeek += 1) {
-        const loggedExercises = new Set(progress.workouts.filter((entry) => entry.week === currentWeek && entry.day === strengthDay).map((entry) => entry.exerciseId));
-        if (requiredExercises.every((exercise) => loggedExercises.has(exercise.id))) completed.add(`${currentWeek}-${strengthDay}`);
-      }
-    }
-    return completed;
-  }, [progress]);
+  const completedDays = useMemo(() => getCompletedWorkoutDays(progress), [progress]);
   const completedCount = completedDays.size;
   const exercise = dayExercises[activeExercise];
 

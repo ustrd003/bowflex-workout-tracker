@@ -54,3 +54,32 @@ test('API stores and reads difficulty for the selected user', async () => {
     if (originalKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = originalKey;
   }
 });
+
+const { getFirstIncompleteWorkout, getCompletedWorkoutDays, strengthExercisesByDay, scheduledWorkoutDays, weeks } = await import(dataUrl);
+const strengthEntries = (week, day) => (strengthExercisesByDay[day] ?? []).map(exercise => ({ week, day, exerciseId: exercise.id }));
+const fullWeek = week => ({ workouts: Object.keys(strengthExercisesByDay).flatMap(day => strengthEntries(week, day)), cardio: ['Wednesday', 'Saturday'].map(day => ({ week, day })) });
+
+test('new user starts at week one day one; partial strength and cardio finish remain incomplete', () => {
+  for (const progress of [
+    { workouts: [], cardio: [] },
+    { workouts: strengthEntries(1, 'Monday').slice(0, 1), cardio: [{week: 1, day: 'Monday'}] },
+  ]) {
+    assert.deepEqual(getFirstIncompleteWorkout(progress), {week: 1, day: 'Monday', allComplete: false});
+    assert.equal(getCompletedWorkoutDays(progress).has('1-Monday'), false);
+  }
+});
+test('selects earliest gap, including cardio, regardless of later completed days', () => {
+  const progress = fullWeek(1);
+  progress.cardio = [{week: 1, day: 'Saturday'}];
+  assert.deepEqual(getFirstIncompleteWorkout(progress), {week: 1, day: 'Wednesday', allComplete: false});
+  progress.workouts = progress.workouts.filter(entry => entry.day !== 'Tuesday');
+  assert.deepEqual(getFirstIncompleteWorkout(progress), {week: 1, day: 'Tuesday', allComplete: false});
+});
+test('completed week advances to next week and skips recovery day', () => {
+  assert.deepEqual(getFirstIncompleteWorkout(fullWeek(1)), {week: 2, day: 'Monday', allComplete: false});
+});
+test('completed plan stays at the last workout and reports all complete', () => {
+  const progress = {workouts: weeks.flatMap(({week}) => fullWeek(week).workouts), cardio: weeks.flatMap(({week}) => fullWeek(week).cardio)};
+  assert.equal(getCompletedWorkoutDays(progress).size, weeks.length * scheduledWorkoutDays.length);
+  assert.deepEqual(getFirstIncompleteWorkout(progress), {week: 8, day: 'Saturday', allComplete: true});
+});

@@ -143,3 +143,33 @@ export function getInitialProgramSelection(startDate?: string | null, today = ne
     day: scheduledDays[dayIndex % 7],
   };
 }
+
+
+type WorkoutProgress = {
+  workouts: Array<{ week: number; day: string; exerciseId: string }>;
+  cardio: Array<{ week: number; day: string }>;
+};
+
+export function getCompletedWorkoutDays(progress: WorkoutProgress) {
+  const completed = new Set<string>();
+  for (const { week } of weeks) {
+    for (const day of scheduledWorkoutDays) {
+      const required = strengthExercisesByDay[day];
+      const done = required
+        ? required.every((exercise) => progress.workouts.some((entry) => entry.week === week && entry.day === day && entry.exerciseId === exercise.id))
+        : progress.cardio.some((entry) => entry.week === week && entry.day === day);
+      if (done) completed.add(`${week}-${day}`);
+    }
+  }
+  return completed;
+}
+
+export function getFirstIncompleteWorkout(progress: WorkoutProgress) {
+  const completed = getCompletedWorkoutDays(progress);
+  for (const { week } of weeks) {
+    for (const day of scheduledWorkoutDays) {
+      if (!completed.has(`${week}-${day}`)) return { week, day, allComplete: false };
+    }
+  }
+  return { week: weeks[weeks.length - 1].week, day: scheduledWorkoutDays[scheduledWorkoutDays.length - 1], allComplete: true };
+}
